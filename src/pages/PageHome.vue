@@ -66,36 +66,45 @@
               </q-item-label>
               <q-item-label class="qweet-content text-body1">{{ qweet.content }}</q-item-label>
               <div class="qweet-icons row justify-between q-mt-sm">
-                <q-btn
-                  color="grey"
-                  icon="far fa-comment"
-                  size="sm"
-                  flat
-                  round
-                />
-                <q-btn
-                  color="grey"
-                  icon="fas fa-retweet"
-                  size="sm"
-                  flat
-                  round
-                />
-                <q-btn
-                  @click="toggleLiked(qweet)"
-                  :color="qweet.liked ? 'pink' : 'grey'"
-                  :icon="qweet.liked ? 'fas fa-heart' : 'far fa-heart'"
-                  size="sm"
-                  flat
-                  round
-                />
-                <q-btn
-                  @click="deleteQweet(qweet)"
-                  color="grey"
-                  icon="fas fa-trash"
-                  size="sm"
-                  flat
-                  round
-                />
+                <div class="icon-group">
+                  <q-btn
+                    color="grey"
+                    icon="far fa-comment"
+                    size="sm"
+                    flat
+                    round
+                  />
+                </div>
+                <div class="icon-group">
+                  <q-btn
+                    color="grey"
+                    icon="fas fa-retweet"
+                    size="sm"
+                    flat
+                    round
+                  />
+                </div>
+                <div class="icon-group">
+                  <q-btn
+                    @click="toggleLiked(qweet)"
+                    :color="isLikedByCurrentUser(qweet) ? 'pink' : 'grey'"
+                    :icon="isLikedByCurrentUser(qweet) ? 'fas fa-heart' : 'far fa-heart'"
+                    size="sm"
+                    flat
+                    round
+                  />
+                  <span v-if="qweet.likeCount > 0" class="like-count text-grey-7">{{ qweet.likeCount }}</span>
+                </div>
+                <div class="icon-group">
+                  <q-btn
+                    @click="deleteQweet(qweet)"
+                    color="grey"
+                    icon="fas fa-trash"
+                    size="sm"
+                    flat
+                    round
+                  />
+                </div>
               </div>
             </q-item-section>
           </q-item>
@@ -119,15 +128,18 @@ export default {
         //   id: 'ID1',
         //   content: 'Be your own hero, its cheaper than a movie ticket.',
         //   date: 1611653238221,
-        //   liked: false
+        //   likes: [],
+        //   likeCount: 0
         // },
         // {
         //   id: 'ID2',
         //   content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed feugiat justo id viverra consequat. Integer feugiat lorem faucibus est ornare scelerisque. Donec tempus, nunc vitae semper sagittis, odio magna semper ipsum, et laoreet sapien mauris vitae arcu.',
         //   date: 1611653252444,
-        //   liked: true
+        //   likes: ['user123'],
+        //   likeCount: 1
         // },
-      ]
+      ],
+      currentUserId: 'current-user-' + Math.random().toString(36).substr(2, 9)
     }
   },
   methods: {
@@ -135,7 +147,8 @@ export default {
       let newQweet = {
         content: this.newQweetContent,
         date: Date.now(),
-        liked: false
+        likes: [],
+        likeCount: 0
       }
       // this.qweets.unshift(newQweet)
       db.collection('qweets').add(newQweet).then(function(docRef) {
@@ -152,9 +165,27 @@ export default {
         console.error('Error removing document: ', error);
       })
     },
+    isLikedByCurrentUser(qweet) {
+      return qweet.likes && qweet.likes.includes(this.currentUserId)
+    },
     toggleLiked(qweet) {
+      const isCurrentlyLiked = this.isLikedByCurrentUser(qweet)
+      let updatedLikes = qweet.likes || []
+      let updatedLikeCount = qweet.likeCount || 0
+
+      if (isCurrentlyLiked) {
+        // Remove like
+        updatedLikes = updatedLikes.filter(userId => userId !== this.currentUserId)
+        updatedLikeCount = Math.max(0, updatedLikeCount - 1)
+      } else {
+        // Add like
+        updatedLikes.push(this.currentUserId)
+        updatedLikeCount = updatedLikeCount + 1
+      }
+
       db.collection('qweets').doc(qweet.id).update({
-        liked: !qweet.liked
+        likes: updatedLikes,
+        likeCount: updatedLikeCount
       })
       .then(function() {
         console.log('Document successfully updated!')
@@ -175,6 +206,15 @@ export default {
       snapshot.docChanges().forEach(change => {
         let qweetChange = change.doc.data()
         qweetChange.id = change.doc.id
+        
+        // Initialize likes array and likeCount if they don't exist (for backward compatibility)
+        if (!qweetChange.likes) {
+          qweetChange.likes = []
+        }
+        if (qweetChange.likeCount === undefined) {
+          qweetChange.likeCount = 0
+        }
+        
         if (change.type === 'added') {
           console.log('New qweet: ', qweetChange)
           this.qweets.unshift(qweetChange)
@@ -215,4 +255,12 @@ export default {
   white-space: pre-line
 .qweet-icons
   margin-left: -5px
+.icon-group
+  display: flex
+  align-items: center
+  gap: 4px
+.like-count
+  font-size: 12px
+  min-width: 20px
+  text-align: center
 </style>
