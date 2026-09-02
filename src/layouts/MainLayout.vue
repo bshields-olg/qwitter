@@ -1,7 +1,7 @@
 <template>
   <q-layout view="lHr lpR fFf">
 
-    <q-header bordered class="bg-white text-black">
+    <q-header bordered :class="$q.dark.isActive ? 'bg-dark text-white' : 'bg-white text-black'">
       <q-toolbar>
         <q-btn dense flat round icon="menu" @click="left = !left" />
 
@@ -14,6 +14,17 @@
             color="primary"
           />
         </q-toolbar-title>
+
+        <q-btn
+          @click="toggleDarkMode"
+          :icon="$q.dark.isActive ? 'fas fa-sun' : 'fas fa-moon'"
+          :aria-label="$q.dark.isActive ? 'Switch to light mode' : 'Switch to dark mode'"
+          dense
+          flat
+          round
+        >
+          <q-tooltip>{{ $q.dark.isActive ? 'Light mode' : 'Dark mode' }}</q-tooltip>
+        </q-btn>
 
       </q-toolbar>
     </q-header>
@@ -124,12 +135,17 @@
 </template>
 
 <script>
+import { toggleDarkMode } from 'src/boot/dark-mode'
+
 export default {
   data () {
     return {
       left: false,
       right: false
     }
+  },
+  methods: {
+    toggleDarkMode
   }
 }
 </script>
