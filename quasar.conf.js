@@ -18,7 +18,8 @@ module.exports = function (/* ctx */) {
     // --> boot files are part of "main.js"
     // https://quasar.dev/quasar-cli/boot-files
     boot: [
-      'firebase'
+      'firebase',
+      'dark-mode'
     ],
 
     // https://quasar.dev/quasar-cli/quasar-conf-js#Property%3A-css
@@ -76,7 +77,11 @@ module.exports = function (/* ctx */) {
     framework: {
       iconSet: 'material-icons', // Quasar icon set
       lang: 'en-us', // Quasar language pack
-      config: {},
+      config: {
+        // follow the OS/browser preference until the user picks a theme
+        // (the "dark-mode" boot file then applies their saved choice)
+        dark: 'auto'
+      },
 
       // Possible values for "importStrategy":
       // * 'auto' - (DEFAULT) Auto-import needed Quasar components & directives
@@ -91,7 +96,9 @@ module.exports = function (/* ctx */) {
       // directives: [],
 
       // Quasar plugins
-      plugins: []
+      plugins: [
+        'LocalStorage' // remembers the dark mode preference
+      ]
     },
 
     // animations: 'all', // --- includes all animations
